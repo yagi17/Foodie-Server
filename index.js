@@ -34,7 +34,19 @@ const dbConnect = async () => {
 };
 dbConnect();
 
+const menuCollection = client.db("FoodieDB").collection("menu")
 
+app.post('/allmenu', async(res, req)=>{
+    const newsItem = req.body
+    const result = await menuCollection.insertOne(newsItem)
+    res.send(result)
+})
+
+app.get('/allmenu', async(req, res) =>{
+    const menu = menuCollection.find()
+    const result = await menu.toArray()
+    res.send(result)
+})
 
 app.get('/', async (req, res)=>{
     res.send('Food is cooking')
