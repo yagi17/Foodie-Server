@@ -66,22 +66,22 @@ app.get('/allMenu/list/:email', async (req, res) => {
 })
 
 // get item by id
-// get item by id
 app.get('/allMenu/:id', async (req, res) => {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
-    const result = await userCollection.find(query).toArray();
+    const result = await menuCollection.find(query).toArray();
     res.send(result);
 });
 
 // delete item by id
 app.delete('/allMenu/:id', async (req, res) => {
     const id = req.params.id;
-    const query = { _id: new ObjectId(id) };
-    const result = await userCollection.deleteOne(query);
+    const query = { _id: new ObjectId(id) }
+    console.log('Delete query:', query);
+    const result = await menuCollection.deleteOne(query);
+    console.log('Delete result:', result);
     res.send(result);
-});
-
+})
 
 app.get('/', async (req, res) => {
     res.send('Food is cooking')
@@ -89,4 +89,4 @@ app.get('/', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Food is cooking on port: ${port}`);
-});
+})
