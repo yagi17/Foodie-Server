@@ -31,7 +31,7 @@ dbConnect();
 // data Collections
 const menuCollection = client.db("FoodieDB").collection("menu")
 const userCollection = client.db('FoodieDB').collection('user')
-const purchaseCollection = client.db('FoodieDB').collection('curt')
+const PurchaseCollection = client.db('FoodieDB').collection('curt')
 
 app.post('/allMenu', async (req, res) => {
     const newsItem = req.body
@@ -78,9 +78,7 @@ app.get('/allMenu/:id', async (req, res) => {
 app.delete('/allMenu/:id', async (req, res) => {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) }
-    // console.log('Delete query:', query);
     const result = await menuCollection.deleteOne(query);
-    // console.log('Delete result:', result);
     res.send(result);
 })
 
@@ -104,19 +102,31 @@ app.patch('/allMenu/:id', async (req, res) => {
     res.send(result);
 });
 
-// Purchase data
-app.post('/curt/:email', async (req, res)=>{
-    const curt = req.body
-    const result = await purchaseCollection.insertOne(curt)
-    res.send(result)
-})
+// Purchase data by email
+app.post('/curt/:email', async (req, res) => {
+    const email = req.params.email;
+    const curtData = req.body;
+    const result = await PurchaseCollection.insertOne({ email, ...curtData });
+    res.send(result);
+});
 
-// get data by email 
-app.get('/curt/:email', async (req, res)=>{
-    const curt = purchaseCollection.find()
-    const result = await curt.toArray()
-    res.send(result)
-})
+// to get items by email
+app.get('/curt/:email', async (req, res) => {
+    const email = req.params.email;
+    const query = { email: email };
+    const result = await PurchaseCollection.find(query).toArray();
+    res.send(result);
+});
+
+//To delete data from curt
+app.delete('/curt/:email/:id', async (req, res) => {
+    const email = req.params.email;
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id), email: email };
+    const result = await PurchaseCollection.deleteOne(query);
+    res.send(result);
+});
+
 
 app.get('/', async (req, res) => {
     res.send('Food is cooking')
