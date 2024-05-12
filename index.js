@@ -31,6 +31,7 @@ dbConnect();
 // data Collections
 const menuCollection = client.db("FoodieDB").collection("menu")
 const userCollection = client.db('FoodieDB').collection('user')
+const purchaseCollection = client.db('FoodieDB').collection('curt')
 
 app.post('/allMenu', async (req, res) => {
     const newsItem = req.body
@@ -77,10 +78,44 @@ app.get('/allMenu/:id', async (req, res) => {
 app.delete('/allMenu/:id', async (req, res) => {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) }
-    console.log('Delete query:', query);
+    // console.log('Delete query:', query);
     const result = await menuCollection.deleteOne(query);
-    console.log('Delete result:', result);
+    // console.log('Delete result:', result);
     res.send(result);
+})
+
+// update item by id
+app.patch('/allMenu/:id', async (req, res) => {
+    const update = req.body;
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const updateFields = {};
+
+    // Check which fields are present in the update object
+    if (update.name) updateFields['name'] = update.name;
+    if (update.image) updateFields['image'] = update.image;
+    if (update.category) updateFields['category'] = update.category;
+    if (update.quantity) updateFields['quantity'] = update.quantity;
+    if (update.description) updateFields['description'] = update.description;
+    if (update.price) updateFields['price'] = update.price;
+
+    const newValue = { $set: updateFields };
+    const result = await menuCollection.updateOne(query, newValue);
+    res.send(result);
+});
+
+// Purchase data
+app.post('/curt/:email', async (req, res)=>{
+    const curt = req.body
+    const result = await purchaseCollection.insertOne(curt)
+    res.send(result)
+})
+
+// get data by email 
+app.get('/curt/:email', async (req, res)=>{
+    const curt = purchaseCollection.find()
+    const result = await curt.toArray()
+    res.send(result)
 })
 
 app.get('/', async (req, res) => {
