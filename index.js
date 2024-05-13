@@ -2,11 +2,18 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'https://foodie-9960c.web.app/'
+    ],
+    credentials: true
+}));
 app.use(express.json());
 
 
@@ -32,6 +39,27 @@ dbConnect();
 const menuCollection = client.db("FoodieDB").collection("menu")
 const userCollection = client.db('FoodieDB').collection('user')
 const PurchaseCollection = client.db('FoodieDB').collection('curt')
+
+// set cookies
+app.post('/cookies', async (req, res) => {
+    const user = req.body
+    console.log('user for token', user);
+    const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
+
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite:"strict",
+    })
+        .send({ success: true })
+})
+
+// clear cookie
+app.post('/logout', async (req, res) => { 
+    const user = req.body
+    console.log('logging out', user);
+    res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+})
 
 // menu data collection
 app.post('/allMenu', async (req, res) => {
@@ -128,6 +156,8 @@ app.delete('/curt/:email/:id', async (req, res) => {
     const result = await PurchaseCollection.deleteOne(query);
     res.send(result);
 });
+
+// console.log(require("crypto").randomBytes(64).toString("hex"));
 
 
 
