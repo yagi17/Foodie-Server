@@ -33,12 +33,14 @@ const menuCollection = client.db("FoodieDB").collection("menu")
 const userCollection = client.db('FoodieDB').collection('user')
 const PurchaseCollection = client.db('FoodieDB').collection('curt')
 
+// menu data collection
 app.post('/allMenu', async (req, res) => {
     const newsItem = req.body
     const result = await menuCollection.insertOne(newsItem)
     res.send(result)
 })
 
+// get all menu item
 app.get('/allMenu', async (req, res) => {
     const menu = menuCollection.find()
     const result = await menu.toArray()
@@ -126,6 +128,7 @@ app.delete('/curt/:email/:id', async (req, res) => {
     const result = await PurchaseCollection.deleteOne(query);
     res.send(result);
 });
+
 
 
 app.get('/', async (req, res) => {
