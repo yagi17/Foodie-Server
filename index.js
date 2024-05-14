@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
@@ -23,7 +22,7 @@ const logger = (req, res, next) => {
     // console.log('log info', req.method, req.url);
     next()
 }
-
+// verify Token
 const verifyToken = (req, res, next) => {
     const token = req?.cookies?.token
     // console.log(token);
@@ -63,6 +62,7 @@ dbConnect();
 const menuCollection = client.db("FoodieDB").collection("menu")
 const userCollection = client.db('FoodieDB').collection('user')
 const purchaseCollection = client.db('FoodieDB').collection('curt')
+const galleryCollection = client.db('FoodieDB').collection('gallery')
 
 // set cookies
 app.post('/cookies', logger, async (req, res) => {
@@ -123,7 +123,7 @@ app.get('/allMenu/list/:email', logger, verifyToken, async (req, res) => {
     const query = { pointPersonEmail: email }
     const result = await menuCollection.find(query).toArray()
     res.send(result)
-})
+});
 
 // get item by id
 app.get('/allMenu/:id', async (req, res) => {
@@ -162,6 +162,7 @@ app.patch('/allMenu/:id', async (req, res) => {
 });
 
 // Purchase data by email
+
 app.post('/curt/:email', async (req, res) => {
     const email = req.params.email;
     const curtData = req.body;
@@ -185,6 +186,19 @@ app.delete('/curt/:email/:id', async (req, res) => {
     const result = await purchaseCollection.deleteOne(query);
     res.send(result);
 });
+
+// gallery
+app.post('/gallery', async (req, res) => {
+    const newsItem = req.body
+    const result = await galleryCollection.insertOne(newsItem)
+    res.send(result)
+})
+
+app.get('/gallery', async (req, res) => {
+    const feedback = galleryCollection.find()
+    const result = await feedback.toArray()
+    res.send(result)
+})
 
 // (require("crypto").randomBytes(64).toString("hex")
 
