@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -15,6 +16,29 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser())
+
+// middlewares
+const logger = (req, res, next) => {
+    console.log('log info', req.method, req.url);
+    next()
+}
+
+const verifyToken = (req, res, next) => {
+    const token = req?.cookies?.token
+    // console.log(token);
+    if (!token) {
+        return res.status(401).send({ message: "unauthorized access" })
+    }
+    jwt.verify(token, process.env.TOKEN_SECRET, (error, decoded) => {
+        if (error) {
+            return res.status(401).send({ message: "unauthorized access" })
+        }
+        req.user = decoded;
+        next()
+    })
+
+}
 
 
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PASS}@cluster0.5bvaa0x.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -25,6 +49,7 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
 const dbConnect = async () => {
     try {
         console.log("You successfully connected to MongoDB!");
@@ -34,14 +59,13 @@ const dbConnect = async () => {
 };
 dbConnect();
 
-
 // data Collections
 const menuCollection = client.db("FoodieDB").collection("menu")
 const userCollection = client.db('FoodieDB').collection('user')
-const PurchaseCollection = client.db('FoodieDB').collection('curt')
+const purchaseCollection = client.db('FoodieDB').collection('curt')
 
 // set cookies
-app.post('/cookies', async (req, res) => {
+app.post('/cookies', logger, async (req, res) => {
     const user = req.body
     console.log('user for token', user);
     const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
@@ -49,13 +73,13 @@ app.post('/cookies', async (req, res) => {
     res.cookie('token', token, {
         httpOnly: true,
         secure: true,
-        sameSite:"strict",
+        sameSite: "strict",
     })
         .send({ success: true })
 })
 
 // clear cookie
-app.post('/logout', async (req, res) => { 
+app.post('/logout', logger, async (req, res) => {
     const user = req.body
     console.log('logging out', user);
     res.clearCookie('token', { maxAge: 0 }).send({ success: true })
@@ -89,8 +113,13 @@ app.get('/users', async (req, res) => {
 })
 
 // get items by point person email
-app.get('/allMenu/list/:email', async (req, res) => {
+app.get('/allMenu/list/:email', logger, verifyToken, async (req, res) => {
     const email = req.params.email
+    console.log(email);
+    console.log('token owner info:', req.user);
+    if (req.user.email !== email) {
+        return res.status(403).send({message: 'forbidden access'})
+    }
     const query = { pointPersonEmail: email }
     const result = await menuCollection.find(query).toArray()
     res.send(result)
@@ -136,7 +165,7 @@ app.patch('/allMenu/:id', async (req, res) => {
 app.post('/curt/:email', async (req, res) => {
     const email = req.params.email;
     const curtData = req.body;
-    const result = await PurchaseCollection.insertOne({ email, ...curtData });
+    const result = await purchaseCollection.insertOne({ email, ...curtData });
     res.send(result);
 });
 
@@ -144,7 +173,7 @@ app.post('/curt/:email', async (req, res) => {
 app.get('/curt/:email', async (req, res) => {
     const email = req.params.email;
     const query = { email: email };
-    const result = await PurchaseCollection.find(query).toArray();
+    const result = await purchaseCollection.find(query).toArray();
     res.send(result);
 });
 
@@ -153,7 +182,7 @@ app.delete('/curt/:email/:id', async (req, res) => {
     const email = req.params.email;
     const id = req.params.id;
     const query = { _id: new ObjectId(id), email: email };
-    const result = await PurchaseCollection.deleteOne(query);
+    const result = await purchaseCollection.deleteOne(query);
     res.send(result);
 });
 
