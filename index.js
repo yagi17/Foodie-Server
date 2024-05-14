@@ -20,7 +20,7 @@ app.use(cookieParser())
 
 // middlewares
 const logger = (req, res, next) => {
-    console.log('log info', req.method, req.url);
+    // console.log('log info', req.method, req.url);
     next()
 }
 
@@ -67,9 +67,9 @@ const purchaseCollection = client.db('FoodieDB').collection('curt')
 // set cookies
 app.post('/cookies', logger, async (req, res) => {
     const user = req.body
-    console.log('user for token', user);
+    // console.log('user for token', user);
     const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
-
+    // console.log(token);
     res.cookie('token', token, {
         httpOnly: true,
         secure: true,
@@ -81,7 +81,7 @@ app.post('/cookies', logger, async (req, res) => {
 // clear cookie
 app.post('/logout', logger, async (req, res) => {
     const user = req.body
-    console.log('logging out', user);
+    // console.log('logging out', user);
     res.clearCookie('token', { maxAge: 0 }).send({ success: true })
 })
 
@@ -115,10 +115,10 @@ app.get('/users', async (req, res) => {
 // get items by point person email
 app.get('/allMenu/list/:email', logger, verifyToken, async (req, res) => {
     const email = req.params.email
-    console.log(email);
-    console.log('token owner info:', req.user);
+    // console.log(email);
+    // console.log('token owner info:', req.user);
     if (req.user.email !== email) {
-        return res.status(403).send({message: 'forbidden access'})
+        return res.status(403).send({ message: 'forbidden access' })
     }
     const query = { pointPersonEmail: email }
     const result = await menuCollection.find(query).toArray()
@@ -186,7 +186,7 @@ app.delete('/curt/:email/:id', async (req, res) => {
     res.send(result);
 });
 
-// console.log(require("crypto").randomBytes(64).toString("hex"));
+// (require("crypto").randomBytes(64).toString("hex")
 
 
 
