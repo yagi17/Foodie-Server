@@ -11,6 +11,7 @@ app.use(cors({
     origin: [
         'http://localhost:5173',
         'https://foodie-9960c.web.app',
+        'https://foodie-9960c.firebaseapp.com'
     ],
     credentials: true
 }));
@@ -67,13 +68,13 @@ const galleryCollection = client.db('FoodieDB').collection('gallery')
 // set cookies
 app.post('/cookies', logger, async (req, res) => {
     const user = req.body
-    // console.log('user for token', user);
+    console.log('user for token', user);
     const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
     // console.log(token);
     res.cookie('token', token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "strict",
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     })
         .send({ success: true })
 })
@@ -82,7 +83,10 @@ app.post('/cookies', logger, async (req, res) => {
 app.post('/logout', logger, async (req, res) => {
     const user = req.body
     // console.log('logging out', user);
-    res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+    res.clearCookie('token', {
+        maxAge: 0, secure: process.env.NODE_ENV === 'production' ? true : false,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+    }).send({ success: true })
 })
 
 // menu data collection
@@ -115,15 +119,15 @@ app.get('/users', async (req, res) => {
 // get items by point person email
 app.get('/allMenu/list/:email', logger, verifyToken, async (req, res) => {
     const email = req.params.email
-    // console.log(email);
-    // console.log('token owner info:', req.user);
+    console.log(email);
+    console.log('token owner info:', req.user);
     if (req.user.email !== email) {
         return res.status(403).send({ message: 'forbidden access' })
     }
     const query = { pointPersonEmail: email }
     const result = await menuCollection.find(query).toArray()
     res.send(result)
-});
+})
 
 // get item by id
 app.get('/allMenu/:id', async (req, res) => {
@@ -201,8 +205,6 @@ app.get('/gallery', async (req, res) => {
 })
 
 // (require("crypto").randomBytes(64).toString("hex")
-
-
 
 app.get('/', async (req, res) => {
     res.send('Food is cooking')
